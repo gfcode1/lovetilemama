@@ -1,0 +1,8 @@
+# Build outputs
+build/
+dist/
+*.love
+
+# Editor swap files
+*.swp
+*.kate-swp

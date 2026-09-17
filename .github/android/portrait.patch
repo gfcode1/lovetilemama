@@ -1,0 +1,13 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index b5f49c2..b21fb74 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -35,7 +35,7 @@ android {
+ 
+         manifestPlaceholders = [
+             NAME:getAppName(),
+-            ORIENTATION:project.properties["app.orientation"],
++            ORIENTATION:"portrait",
+         ]
+     }
+     buildTypes {
