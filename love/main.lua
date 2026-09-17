@@ -257,7 +257,8 @@ local function handlePointerDown(x,y)
       return true
     elseif hit=="leaderboard" then Router.push("leaderboard"); return true
     elseif hit=="achievements" then Router.push("achievements"); return true
-    elseif hit=="help" then Router.push("help"); return true
+    elseif hit=="help" then HelpScene.setPage(1); Router.push("help"); return true
+    elseif hit=="minigames" then HelpScene.setPage(5); Router.push("help"); return true
     elseif hit=="settings" then Router.push("settings"); return true
     elseif hit=="quit" then love.event.quit(); return true
     end
@@ -270,7 +271,7 @@ local function handlePointerDown(x,y)
       return true
     elseif hit=="leaderboard" then Router.replace("leaderboard"); return true
     elseif hit=="achievements" then Router.replace("achievements"); return true
-    elseif hit=="help" then Router.replace("help"); return true
+    elseif hit=="help" then HelpScene.setPage(1); Router.replace("help"); return true
     elseif hit=="settings" then Router.replace("settings"); return true
     elseif hit=="menu" then goMenu(); return true
     end

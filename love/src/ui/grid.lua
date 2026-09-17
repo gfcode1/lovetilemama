@@ -59,7 +59,7 @@ function G.loadImages()
     if ok then specialImages["minigame_memo"] = img end
   end
   -- Riusa le sprite della board in toast/banner (Emoji.draw).
-  for _, name in ipairs({ "levelup", "minigame", "points", "points_1", "points_2", "points_3" }) do
+  for _, name in ipairs({ "levelup", "minigame", "minigame_whack", "minigame_memo", "points", "points_1", "points_2", "points_3" }) do
     if specialImages[name] then Emoji.register(name, specialImages[name]) end
   end
 end

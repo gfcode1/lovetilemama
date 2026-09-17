@@ -1,17 +1,19 @@
 # AGENTS.md
 
 ## What this is
-LÖVE 11.5 (Lua) puzzle game. The entire game lives in `love/`; `love/main.lua` is the entrypoint and defines all `love.*` callbacks, requiring the rest as modules. Docs are in Italian (`DINAMICHE_DI_GIOCO.md`, `bonus.md`, `minigames.md`, `love/SPRITE_MANCANTI.md`).
+LÖVE 11.5 (Lua) puzzle game. The entire game lives in `love/`; `love/main.lua` is the entrypoint and defines all `love.*` callbacks, requiring the rest as modules. Docs are in Italian (`DINAMICHE_DI_GIOCO.md`, `bonus.md`, `minigames.md`, `PIANO_MINIGIOCO_MEMO.md`, `love/SPRITE_MANCANTI.md`).
 
 ## Layout gotchas
 - The runtime asset root is `love/assets/...` (paths such as `assets/emoji/star.png` are resolved relative to `love/`).
 - Root `assets/` and `openmoji-72x72-color/` are **not** loaded at runtime. Root `assets/` is a near-duplicate that has diverged, so editing it changes nothing in-game — edit `love/assets/`.
 - Saves/settings go through `love.filesystem` under identity `tilemama` (`love/conf.lua`), not the repo.
 - Architecture: `main.lua` callbacks → `src/ui/router.lua` + `src/ui/scenes/`; game rules in `src/engine/`; meta systems in `src/systems/`; balance/tuning constants in `src/config.lua`. `src/ui/emoji.lua` maps logical names to `assets/emoji/*.png`.
+- Minigames are registered in `src/minigames/init.lua` (the only place to add a new one); each module must expose `new(layout)` plus `:update(dt)`, `:draw()`, `:pointerpressed(x,y)`, `:keypressed(key)`, `:isFinished()`, `:getScore()`. They share `src/minigames/sprites.lua` / `ui.lua` and draw from `assets/minigiochi/<game>/` (6 sprites each except memo's 10). While a minigame is active it owns `love.update` and freezes the board.
 
 ## Run / verify
 - Run from repo root: `love love` (LÖVE 11.5 installed). Window is 720×1280 portrait (`love/conf.lua`).
 - No test, lint, or typecheck tooling exists. Verify by running the game; tune behavior via `love/src/config.lua`.
+- Debug env harness in `main.lua`/`engine.lua`: `TILEMAMA_MG=<game>` force-starts a minigame in game, `TILEMAMA_SPECIALS=1` spawns one of each special, `TILEMAMA_SHOTS=<dir>` auto-captures menu/game/minigame PNGs then quits, `TILEMAMA_DEBUG=1` logs malus handling. Prefer these over clicking through the game to reach a state.
 
 ## Build & CI
 - CI: `.github/workflows/build.yml`. Job `package` builds `tilemama.love`; `android`, `linux`, `windows` consume it; `release` publishes on `v*` tags.

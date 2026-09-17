@@ -5,15 +5,17 @@ local Button = require("src.ui.components.button")
 local Help = {}
 local cardX, cardY, cardW, cardH
 local page = 1
-local totalPages = 5
+local totalPages = 7
 local nextBtn, prevBtn
 
 local pages = {
   {title = "Movimento",   desc = "Trascina un blocco in 8 direzioni. Scorri fino all'ostacolo. Ghost rosa mostra l'anteprima.", icon = "hand"},
   {title = "Fusione",     desc = "Stesso colore + stesso valore = fusione. 8+8 → 16. A 32 esplode: +4 blocchi da 1.", icon = "boom"},
-  {title = "Bonus", desc = "Ogni 6-10s appare un bonus da toccare o trascinare: level up (tutti i tile salgono di livello), grow (raddoppia un tile a scelta), jolly/arcobaleno (tile universale), spada/laser (elimina righe e colonne), 100/200/300 punti, clone, muro (2 vite, dà punti se distrutto).", icon = "sparkles"},
-  {title = "Malus", desc = "Ogni 15-25s un malus: level down (tutti i tile perdono un livello), ghiaccio (board bloccata), scramble (mischia i pezzi), invertito (movimenti invertiti), pioggia (2-5 pezzi in più), tassa (punti dimezzati per 8s).", icon = "target"},
-  {title = "Minigiochi", desc = "Ogni tanto appare un tile Minigioco: toccalo per giocare a Falling Tiles. Muovi il secchio toccando a sinistra o a destra (o trascinando) e prendi più tile che puoi in 30s. I punti presi si sommano al tuo score.", icon = "star"},
+  {title = "Bonus", desc = "Ogni ~11-17s appare un bonus da toccare o trascinare: level up (tutti i tile salgono di livello), grow (raddoppia un tile a scelta), jolly/arcobaleno (tile universale), spada/laser (elimina righe e colonne), 100/200/300 punti, clone, muro (2 vite, dà punti se distrutto).", icon = "sparkles"},
+  {title = "Malus", desc = "Ogni ~24-40s un malus: level down (tutti i tile perdono un livello), ghiaccio (board bloccata), scramble (mischia i pezzi), invertito (movimenti invertiti), pioggia (~22s, 2-5 pezzi in più), tassa (punti dimezzati per 8s).", icon = "target"},
+  {title = "CATCH", desc = "Un tile Minigioco appare ogni ~65-100s: toccalo per giocare. Il secchio è in basso: tocca a sinistra o a destra (o trascina, o usa le frecce) per spostarlo e prendi le tile che cadono. Ogni tile vale il suo valore × 5, con streak se le prendi di fila. Hai 30 secondi.", icon = "minigame"},
+  {title = "TALPA!", desc = "In alto compare un bersaglio: tocca solo le talpe con lo stesso sprite. Ogni centro vale il valore × 5, ma un tap sbagliato toglie punti. Fino a 3 talpe insieme, 30 secondi. I punti fatti si sommano al tuo score.", icon = "minigame_whack"},
+  {title = "MEMO", desc = "Griglia 4×5: gira due carte per trovare le coppie uguali. Ogni coppia vale 25 punti, con bonus crescendo se fai streak; le carte sbagliate si ricoprono e la streak si azzera. Risolvi tutto entro 45s per un time bonus di 15 punti al secondo.", icon = "minigame_memo"},
 }
 
 local function build(w, h)

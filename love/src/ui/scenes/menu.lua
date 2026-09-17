@@ -22,13 +22,14 @@ local function buildButtons(w, h, hasSave)
     {id = "new",       label = "Nuova Partita", icon = "sparkles", variant = "primary"},
     {id = "leaderboard", label = "Classifica",  icon = "trophy",   variant = "secondary"},
     {id = "achievements", label = "Traguardi",  icon = "target",   variant = "secondary"},
+    {id = "minigames", label = "Minigiochi",    icon = "minigame", variant = "secondary"},
     {id = "help",      label = "Come si gioca", icon = "question", variant = "secondary"},
     {id = "settings",  label = "Impostazioni",  icon = "package",  variant = "secondary"},
   }
 
   local os = love.system and love.system.getOS and love.system.getOS() or "Linux"
   if os ~= "Android" and os ~= "iOS" then
-    table.insert(labels, {id = "quit", label = "Esci", icon = nil, variant = "ghost"})
+    table.insert(labels, {id = "quit", label = "Esci", icon = "exit", variant = "ghost"})
   end
 
   for i, info in ipairs(labels) do

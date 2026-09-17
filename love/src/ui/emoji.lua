@@ -26,6 +26,7 @@ local files={
   money="money.png",
   scissors="scissors.png",
   package="package.png",
+  exit="exit.png",
   arrow_up="arrow_up.png",
   arrow_down="arrow_down.png",
   arrow_left="arrow_left.png",
