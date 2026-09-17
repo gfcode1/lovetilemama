@@ -59,14 +59,14 @@ jobs:
           app-name: ${{ env.APP_NAME }}
           bundle-id: ${{ env.BUNDLE_ID }}
           love-ref: ${{ env.LOVE_REF }}
-          love-patch: ${{ github.workspace }}/.github/android/portrait.patch
-          love-package: ${{ github.workspace }}/tilemama.love
-          resource-path: ${{ github.workspace }}/.github/android/res
+          love-patch: .github/android/portrait.patch
+          love-package: tilemama.love
+          resource-path: .github/android/res
           icon-specifier: "@mipmap/ic_launcher"
           product-name: ${{ env.PRODUCT_NAME }}
           version-string: ${{ steps.version.outputs.version }}
           version-code: ${{ github.run_number }}
-          output-folder: ${{ github.workspace }}/dist
+          output-folder: dist
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -98,12 +98,12 @@ jobs:
           bundle-id: ${{ env.BUNDLE_ID }}
           description: TileMama - LÖVE puzzle game
           version-string: ${{ steps.version.outputs.version }}
-          icon-path: ${{ github.workspace }}/.github/linux/icon.png
+          icon-path: .github/linux/icon.png
           love-ref: ${{ env.LOVE_REF }}
-          love-package: ${{ github.workspace }}/tilemama.love
+          love-package: tilemama.love
           build-deb: true
           product-name: ${{ env.PRODUCT_NAME }}
-          output-folder: ${{ github.workspace }}/dist
+          output-folder: dist
       - name: Upload Linux packages
         uses: actions/upload-artifact@v4
         with:
@@ -126,10 +126,10 @@ jobs:
         uses: love-actions/love-actions-windows@v2
         with:
           love-ref: ${{ env.LOVE_REF }}
-          love-package: ${{ github.workspace }}/tilemama.love
-          icon-path: ${{ github.workspace }}/.github/windows/icon.ico
+          love-package: tilemama.love
+          icon-path: .github/windows/icon.ico
           product-name: ${{ env.PRODUCT_NAME }}
-          output-folder: ${{ github.workspace }}/dist
+          output-folder: dist
       - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
