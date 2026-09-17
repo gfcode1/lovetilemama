@@ -12,6 +12,7 @@ local M = {}
 local modules = {
   falling = "src.minigames.falling",
   whack = "src.minigames.whack",
+  memo = "src.minigames.memo",
 }
 
 function M.list()

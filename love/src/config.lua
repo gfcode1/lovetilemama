@@ -10,20 +10,20 @@ M.GAME_CONFIG = {
   initialBlocksPerColor = 4,
   explosionValue = 32,
   explosionSpawnCount = 4,
-  bonusMinDelayMs = 6500,
-  bonusMaxDelayMs = 10500,
+  bonusMinDelayMs = 11000,
+  bonusMaxDelayMs = 17000,
   specialDurationMs = 9000,
   wallDurationMs = 12000,
   wallHp = 2,
   cleanupIntervalMs = 250,
-  malusMinDelayMs = 15000,
-  malusMaxDelayMs = 25000,
-  malusGraceMs = 30000,
+  malusMinDelayMs = 24000,
+  malusMaxDelayMs = 40000,
+  malusGraceMs = 45000,
   malusFreezeMs = 3000,
   malusInvertMs = 6000,
   malusTaxMs = 8000,
-  rainIntervalMs = 12000,
-  rainGraceMs = 8000,
+  rainIntervalMs = 22000,
+  rainGraceMs = 14000,
   rainMin = 2,
   rainMax = 5,
   missionsPerRun = 3,
@@ -35,9 +35,9 @@ M.GAME_CONFIG = {
   addTilesRewardPerTile = 10,
   wallBreakReward = 20,
   -- minigames
-  minigameMinDelayMs = 45000,
-  minigameMaxDelayMs = 75000,
-  minigameGraceMs = 20000,
+  minigameMinDelayMs = 65000,
+  minigameMaxDelayMs = 100000,
+  minigameGraceMs = 35000,
   minigameSpecialDurationMs = 15000,
   minigameDurationMs = 30000,
   minigameFallSpeed = 3.5,
@@ -52,6 +52,14 @@ M.GAME_CONFIG = {
   minigameWhackMaxMoles = 3,
   minigameWhackTargetEveryMs = 4000,
   minigameWhackPenalty = 1,
+  -- minigame memo (memory match)
+  minigameMemoCols = 4,
+  minigameMemoRows = 5,
+  minigameMemoDurationMs = 45000,
+  minigameMemoFlipBackMs = 700,
+  minigameMemoTimeBonusPerSec = 15,
+  minigameMemoPointsPerMatch = 25,
+  minigameMemoMismatchPenalty = 0,
 }
 
 M.POINTS_VALUES = {100, 200, 300}
@@ -85,8 +93,8 @@ M.SPECIAL_WEIGHTS = {
 }
 
 -- minigames (activated by a dedicated board special)
-M.MINIGAME_KINDS = {"falling", "whack"}
-M.MINIGAME_WEIGHTS = { falling = 0.6, whack = 0.4 }
+M.MINIGAME_KINDS = {"falling", "whack", "memo"}
+M.MINIGAME_WEIGHTS = { falling = 0.45, whack = 0.30, memo = 0.25 }
 M.MINIGAME_TILE_VALUES = {1, 1, 2, 2, 4, 8}
 M.MINIGAME_POINTS_PER_VALUE = 5
 

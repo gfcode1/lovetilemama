@@ -451,6 +451,38 @@ local function drawStar(x, y, r, rot, col, alpha)
   love.graphics.pop()
 end
 
+-- ═══════════════════════════════════════════
+-- SPARKLES — stelline ambientali per tile speciali/bonus
+-- Disegno procedurale (nessuna allocazione), pixellato attorno alla cella.
+-- Le tile normali non hanno sparkles: serve a distinguerle a colpo d'occhio.
+-- ═══════════════════════════════════════════
+function FX.drawSparkles(cx, cy, r, seed, t, col, intensity)
+  intensity = intensity or 1
+  if not FX.motion or intensity <= 0.01 then return end
+  local c = col or {1, 0.92, 0.45}
+  love.graphics.setBlendMode("add")
+  for i = 1, 5 do
+    local ph  = hashId(seed * 7 + i * 31)
+    local ph2 = hashId(seed * 13 + i * 57)
+    -- posizione orbitale lenta attorno al tile
+    local ang = ph * 6.283 + t * (0.35 + ph2 * 0.55)
+    local rad = r * (0.35 + 0.65 * ((ph2 + t * 0.12) % 1))
+    local x = cx + math.cos(ang) * rad
+    local y = cy + math.sin(ang) * rad * 0.9
+    -- inviluppo di scintillio (picchi netti, non sinusoidale piatto)
+    local tw = 0.5 + 0.5 * math.sin(t * (2.6 + ph * 3.4) + ph2 * 6.283)
+    local a = tw * tw * intensity
+    if a > 0.04 then
+      local s = r * (0.09 + 0.13 * tw)
+      drawStar(x, y, s, t * (0.6 + ph) + ph2 * 6.283, c, a * 0.95)
+      love.graphics.setColor(1, 1, 1, a * 0.85)
+      love.graphics.circle("fill", x, y, s * 0.30)
+    end
+  end
+  love.graphics.setBlendMode("alpha")
+  love.graphics.setColor(1, 1, 1)
+end
+
 function FX.drawClip(gx, gy, gw, gh, t)
   local prevSX, prevSY, prevSW, prevSH = love.graphics.getScissor()
   love.graphics.setScissor(gx, gy, gw, gh)

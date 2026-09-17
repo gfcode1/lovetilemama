@@ -4,12 +4,15 @@
 -- so colour is not used inside them: matching is by sprite/value.
 local S = {}
 
--- One value per sprite (sprite index 1..6).
-S.VALUES = { 1, 2, 4, 8, 16, 32 }
+-- One value per sprite (sprite index 1..N).
+-- The board game tops out at 32; higher tiers exist only for sprite sets that
+-- declare more than 6 images (e.g. memo's 10 cards).
+S.VALUES = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 }
 
 local defs = {
   whack = { dir = "assets/minigiochi/whack", prefix = "mole_", count = 6 },
   falling = { dir = "assets/minigiochi/falling", prefix = "leaf_", count = 6 },
+  memo = { dir = "assets/minigiochi/memo", prefix = "card_", count = 10 },
 }
 
 local cache = {}

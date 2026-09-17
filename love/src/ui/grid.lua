@@ -53,6 +53,11 @@ function G.loadImages()
     local ok, img = pcall(love.graphics.newImage, "assets/minigiochi/whack/icon.png")
     if ok then specialImages["minigame_whack"] = img end
   end
+  -- Icona dedicata allo speciale "minigame" quando il gioco estratto e memo.
+  if love.filesystem.getInfo("assets/minigiochi/memo/icon.png") then
+    local ok, img = pcall(love.graphics.newImage, "assets/minigiochi/memo/icon.png")
+    if ok then specialImages["minigame_memo"] = img end
+  end
   -- Riusa le sprite della board in toast/banner (Emoji.draw).
   for _, name in ipairs({ "levelup", "minigame", "points", "points_1", "points_2", "points_3" }) do
     if specialImages[name] then Emoji.register(name, specialImages[name]) end
@@ -68,6 +73,19 @@ local SPECIAL_BG = {
   points    = {{1, 0.92, 0.72},  {1, 0.84, 0.58}},
   minigame  = {{0.90, 0.86, 1},  {0.80, 0.74, 1}},
 }
+
+-- Tinta delle stelline: identifica il tipo di bonus e distingue le tile speciali
+-- dalle tile normali (che hanno solo alone/riflesso).
+local SPARKLE_COL = {
+  laser     = {1, 0.95, 0.55},
+  grow      = {0.62, 0.90, 1},
+  jolly     = {0.85, 0.75, 1},
+  clone     = {0.60, 1, 0.78},
+  levelup   = {1, 0.90, 0.50},
+  points    = {1, 0.86, 0.45},
+  minigame  = {0.78, 0.68, 1},
+}
+local SPARKLE_GOLD = {1, 0.92, 0.45}
 
 -- ═══════════════════════════════════════════
 -- DRAW
@@ -195,6 +213,8 @@ function G.draw(engine, layout, selectedId, ghost, pendingMode)
     local img = specialImages[kind]
     if kind == "minigame" and sp.game == "whack" then
       img = specialImages["minigame_whack"] or img
+    elseif kind == "minigame" and sp.game == "memo" then
+      img = specialImages["minigame_memo"] or img
     end
     if kind == "points" then
       local lvl = sp.pointsLevel or 1
@@ -221,6 +241,10 @@ function G.draw(engine, layout, selectedId, ghost, pendingMode)
       love.graphics.setFont(getFont(10))
       love.graphics.printf(kind, rx, ry + cs / 2 - 6 + ioy, cs, "center")
     end
+
+    -- Stelline: rendono i bonus riconoscibili a colpo d'occhio
+    FX.drawSparkles(icx, icy + ioy, cs * 0.5, seed, t,
+      SPARKLE_COL[kind] or SPARKLE_GOLD, 1)
 
     -- Timer ring
     if sp.expiresAt then
