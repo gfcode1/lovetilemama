@@ -1,17 +1,17 @@
 -- Whack-a-Tile minigame ("TALPA!").
--- A target tile {color,value} is shown in the HUD; tiles pop up on the board
--- and only the ones matching the target must be tapped. Wrong taps cost points.
+-- A target sprite {index,value} is shown in the HUD; character sprites pop up
+-- on the board and only the ones matching the target must be tapped. Wrong
+-- taps cost points. Each sprite maps to a fixed value (see minigames.sprites).
 local config = require("src.config")
 local Theme = require("src.ui.theme")
 local Anim = require("src.ui.animations")
-local GridUI = require("src.ui.grid")
+local Sprites = require("src.minigames.sprites")
 local MUI = require("src.minigames.ui")
 
 local Whack = {}
 Whack.__index = Whack
 
-local COLOR_LIST = config.COLORS
-local VALUE_LIST = config.MINIGAME_TILE_VALUES or { 1, 1, 2, 2, 4, 8 }
+local GAME = "whack"
 local POINTS_PER_VALUE = config.MINIGAME_POINTS_PER_VALUE or 5
 local GC = config.GAME_CONFIG
 local INTRO_TIME = (GC.minigameIntroMs or 1200) / 1000
@@ -39,18 +39,6 @@ local function easeOutBack(t)
   local s = 1.70158
   t = t - 1
   return t * t * ((s + 1) * t + s) + 1
-end
-
-local function candyOf(color)
-  return Theme.candy[color] or Theme.candy.green
-end
-
-local function candySkin(color)
-  local c = Theme.candy
-  if color == "red" then return c.redBg, c.red, c.redDark end
-  if color == "yellow" then return c.yellowBg, c.yellow, c.yellowDark end
-  if color == "blue" then return c.blueBg, c.blue, c.blueDark end
-  return c.greenBg, c.green, c.greenDark
 end
 
 function Whack:setLayout(layout)
@@ -104,7 +92,7 @@ function Whack.new(layout)
   self.bestStreak = 0
   self.finished = false
 
-  self.target = { color = COLOR_LIST[randi(#COLOR_LIST)], value = VALUE_LIST[randi(#VALUE_LIST)] }
+  self.target = self:makeTarget()
   self.targetFlash = 0
   self.introT = 0
   self.hitFlash = {}
@@ -126,14 +114,21 @@ function Whack:finish() self.finished = true end
 
 local function cellKey(col, row) return row * 100 + col end
 
+function Whack:makeTarget(index)
+  local n = Sprites.count(GAME)
+  if n == 0 then return { index = 1, value = 1 } end
+  index = index or randi(n)
+  return { index = index, value = Sprites.value(GAME, index) }
+end
+
 function Whack:rotateTarget()
-  local nc, nv = self.target.color, self.target.value
+  local n = Sprites.count(GAME)
+  local index = self.target.index
   for _ = 1, 8 do
-    nc = COLOR_LIST[randi(#COLOR_LIST)]
-    nv = VALUE_LIST[randi(#VALUE_LIST)]
-    if nc ~= self.target.color or nv ~= self.target.value then break end
+    index = randi(math.max(1, n))
+    if index ~= self.target.index then break end
   end
-  self.target.color, self.target.value = nc, nv
+  self.target = self:makeTarget(index)
   self.targetTimer = TARGET_EVERY
   self.targetFlash = 1
 end
@@ -157,30 +152,21 @@ end
 function Whack:spawnMole()
   local col, row = self:pickCell()
   if not col then return end
+  local n = Sprites.count(GAME)
   local isTarget = love.math.random() < 0.45
-  local color, value
-  if isTarget then
-    color, value = self.target.color, self.target.value
+  local index
+  if isTarget or n <= 1 then
+    index = self.target.index
   else
-    if randi(2) == 1 then
-      color = self.target.color
-      for _ = 1, 8 do
-        value = VALUE_LIST[randi(#VALUE_LIST)]
-        if value ~= self.target.value then break end
-      end
-      if value == self.target.value then value = self.target.value * 2 end
-    else
-      value = self.target.value
-      for _ = 1, 8 do
-        color = COLOR_LIST[randi(#COLOR_LIST)]
-        if color ~= self.target.color then break end
-      end
-      if color == self.target.color then color = (self.target.color == "red") and "blue" or "red" end
+    index = randi(n)
+    for _ = 1, 8 do
+      if index ~= self.target.index then break end
+      index = randi(n)
     end
   end
   table.insert(self.moles, {
     col = col, row = row,
-    color = color, value = value,
+    index = index, value = Sprites.value(GAME, index),
     isTarget = isTarget,
     phase = "rise", t = 0,
     upTime = UP_BASE + (UP_MIN - UP_BASE) * (self.elapsed / self.duration),
@@ -202,7 +188,7 @@ end
 function Whack:hitMole(mole)
   local cx, cy = self:cellCenter(mole.col, mole.row)
   local key = cellKey(mole.col, mole.row)
-  local match = (mole.color == self.target.color and mole.value == self.target.value)
+  local match = (mole.index == self.target.index)
 
   if match then
     self.streak = self.streak + 1
@@ -213,7 +199,7 @@ function Whack:hitMole(mole)
     self.caught = self.caught + 1
     self.hitFlash[key] = 1
 
-    local col = candyOf(mole.color)
+    local col = Theme.accent
     Anim.addScorePop(cx, cy - self.cs * 0.4, "+" .. gained, col)
     self.fx:burst(cx, cy, col, { count = 12, speed = 165 })
     self.fx:burst(cx, cy, col, {
@@ -354,9 +340,21 @@ end
 -- ═══════════════════════════════════════════
 -- DRAW
 -- ═══════════════════════════════════════════
-function Whack:drawTile(color, value, px, py, cs, scale, alpha, rot)
-  local topBg, botCol = candySkin(color)
-  local bw, bh = cs * 0.92 * scale, cs * 0.92 * scale
+local function drawValueBadge(px, py, cs, value, alpha)
+  local r = math.max(9, cs * 0.20)
+  local tw = math.max(Theme.fontSize.tiny, math.floor(cs * 0.26))
+  Theme.softShadow(px - r, py - r, r * 2, r * 2, r, 0.45, { 0.10, 0.06, 0.22 })
+  love.graphics.setColor(0.16, 0.12, 0.28, 0.88 * alpha)
+  love.graphics.circle("fill", px, py, r)
+  love.graphics.setColor(1, 1, 1, 0.18 * alpha)
+  love.graphics.circle("line", px, py, r)
+  love.graphics.setFont(getFont(tw))
+  love.graphics.setColor(1, 0.98, 0.9, alpha)
+  love.graphics.printf(tostring(value), px - r, py - tw * 0.58, r * 2, "center")
+end
+
+function Whack:drawSprite(index, px, py, cs, scale, alpha, rot)
+  local entry = Sprites.get(GAME, index)
 
   love.graphics.setColor(0, 0, 0, 0.20 * alpha)
   love.graphics.ellipse("fill", px, py + cs * 0.46, cs * 0.32 * scale, cs * 0.12 * scale)
@@ -366,24 +364,23 @@ function Whack:drawTile(color, value, px, py, cs, scale, alpha, rot)
   love.graphics.rotate(rot or 0)
   love.graphics.scale(scale, scale)
 
-  Theme.softShadow(-bw / 2, -bh / 2 + cs * 0.06, bw, bh, Theme.radius.block, 0.5)
-  love.graphics.setColor(topBg[1], topBg[2], topBg[3], alpha)
-  love.graphics.rectangle("fill", -bw / 2, -bh / 2, bw, bh, Theme.radius.block, Theme.radius.block)
-
-  local img = GridUI.tileImage(color, value)
-  if img then
+  if entry and entry.img then
+    local img = entry.img
     local iw, ih = img:getDimensions()
-    local s = math.min((cs + 4) / iw, (cs + 4) / ih)
+    local s = math.min((cs + 6) / iw, (cs + 6) / ih)
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.draw(img, 0, 0, 0, s, s, iw / 2, ih / 2)
   else
-    love.graphics.setColor(botCol[1], botCol[2], botCol[3], alpha)
-    love.graphics.rectangle("fill", -cs * 0.4, -cs * 0.4, cs * 0.8, cs * 0.8, Theme.radius.block, Theme.radius.block)
+    Theme.rrSolid(-cs * 0.4, -cs * 0.4, cs * 0.8, cs * 0.8, Theme.radius.block, Theme.candy.green)
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.setFont(getFont(math.max(10, math.floor(cs * 0.34))))
-    love.graphics.printf(tostring(value), -cs / 2, -cs * 0.18, cs, "center")
+    love.graphics.printf(tostring(index), -cs / 2, -cs * 0.18, cs, "center")
   end
   love.graphics.pop()
+
+  if entry then
+    drawValueBadge(px, py + cs * 0.36 * scale, cs, entry.value, alpha)
+  end
   love.graphics.setColor(1, 1, 1)
 end
 
@@ -402,7 +399,7 @@ function Whack:drawMole(m, t)
   if MUI.motion() then
     rot = math.sin(t * 3 + m.wobble) * 0.06 + m.spin * 0.04
   end
-  self:drawTile(m.color, m.value, px, py, cs, scale, alpha, rot)
+  self:drawSprite(m.index, px, py, cs, scale, alpha, rot)
 end
 
 function Whack:draw()
@@ -477,20 +474,19 @@ local function drawTargetPanel(x, y, w, h, target, flash, t)
   love.graphics.setColor(0.86, 0.80, 0.95, 0.9)
   love.graphics.print("COLPOISCI", x + h * 0.95, y + h / 2 - Theme.fontSize.tiny * 0.9)
 
-  local img = GridUI.tileImage(target.color, target.value)
+  local entry = Sprites.get(GAME, target.index)
   local ts = h * 0.68
-  if img then
+  local tx = x + w - h * 0.6
+  if entry and entry.img then
+    local img = entry.img
     local iw, ih = img:getDimensions()
     local s = ts / math.max(iw, ih)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(img, x + w - h * 0.6, y + h / 2, 0, s, s, iw / 2, ih / 2)
+    love.graphics.draw(img, tx, y + h / 2, 0, s, s, iw / 2, ih / 2)
+    drawValueBadge(tx + ts * 0.34, y + h / 2 + ts * 0.34, h, target.value, 1)
   else
-    local col = candyOf(target.color)
-    love.graphics.setColor(col[1], col[2], col[3])
-    love.graphics.circle("fill", x + w - h * 0.6, y + h / 2, ts * 0.4)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(Theme.font(Theme.fontSize.h3))
-    love.graphics.printf(tostring(target.value), x + w - h * 0.6 - ts / 2, y + h / 2 - Theme.fontSize.h3 * 0.55, ts, "center")
+    love.graphics.setColor(Theme.accent)
+    love.graphics.circle("fill", tx, y + h / 2, ts * 0.4)
   end
   love.graphics.setColor(1, 1, 1)
 end
@@ -528,7 +524,7 @@ function Whack:drawHUD()
   else
     love.graphics.setFont(Theme.font(Theme.fontSize.small))
     love.graphics.setColor(0.82, 0.78, 0.92, 0.85)
-    love.graphics.printf("Tocca solo le tile che combaciano col bersaglio!", stage.x, fy, w, "center")
+    love.graphics.printf("Colpisci solo la talpa bersaglio!", stage.x, fy, w, "center")
   end
 
   if self.introT < INTRO_TIME then
@@ -538,7 +534,7 @@ function Whack:drawHUD()
       { size = Theme.fontSize.hero, fill = { 1, 0.6, 0.75 } })
     love.graphics.setFont(Theme.font(Theme.fontSize.body))
     love.graphics.setColor(1, 1, 1, a * 0.9)
-    love.graphics.printf("Colpisci la tile bersaglio, evita le esche!", stage.x, cy + 12, w, "center")
+    love.graphics.printf("Colpisci la talpa bersaglio, evita le esche!", stage.x, cy + 12, w, "center")
   end
 
   love.graphics.setColor(1, 1, 1)

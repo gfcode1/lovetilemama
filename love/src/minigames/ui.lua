@@ -181,7 +181,7 @@ end
 function MUI.drawStage(gx, gy, gw, gh, t, opts)
   opts = opts or {}
   local r = opts.radius or Theme.radius.card
-  local st = Theme.stage
+  local st = Theme.stageMinigame
 
   Theme.softShadow(gx, gy, gw, gh, r, 1.0, { 0.10, 0.06, 0.22 })
 
@@ -230,7 +230,7 @@ end
 
 -- Playfield background: checker cells + faint grid, drawn inside the stage.
 function MUI.drawField(gx, gy, cols, rows, cs, floorRow)
-  local st = Theme.stage
+  local st = Theme.stageMinigame
   for y = 0, rows - 1 do
     for x = 0, cols - 1 do
       local rx, ry = gx + x * cs, gy + y * cs
@@ -243,7 +243,7 @@ function MUI.drawField(gx, gy, cols, rows, cs, floorRow)
   end
   if floorRow then
     local fy = gy + floorRow * cs
-    Theme.set(Theme.stage.floor)
+    Theme.set(st.floor)
     love.graphics.rectangle("fill", gx, fy + cs * 0.72, cols * cs, cs * 0.28,
       Theme.radius.cell, Theme.radius.cell)
   end

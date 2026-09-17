@@ -1,17 +1,17 @@
 -- Falling Tiles minigame ("Catch").
 -- Empty arena; a bucket sits on the floor and slides left/right on tap/drag/keys.
--- Coloured tiles fall from the top: catch them with the bucket to score.
+-- Character sprites fall from the top: catch them with the bucket to score.
+-- Each sprite maps to a fixed value (see minigames.sprites).
 local config = require("src.config")
 local Theme = require("src.ui.theme")
 local Anim = require("src.ui.animations")
-local GridUI = require("src.ui.grid")
+local Sprites = require("src.minigames.sprites")
 local MUI = require("src.minigames.ui")
 
 local Falling = {}
 Falling.__index = Falling
 
-local COLOR_LIST = config.COLORS
-local VALUE_LIST = config.MINIGAME_TILE_VALUES or { 1, 1, 2, 2, 4, 8 }
+local GAME = "falling"
 local POINTS_PER_VALUE = config.MINIGAME_POINTS_PER_VALUE or 5
 local GC = config.GAME_CONFIG
 local STREAK_WINDOW = (GC.minigameStreakWindowMs or 1100) / 1000
@@ -29,10 +29,6 @@ local function easeOutBack(t)
   local s = 1.70158
   t = t - 1
   return t * t * ((s + 1) * t + s) + 1
-end
-
-local function candyOf(color)
-  return Theme.candy[color] or Theme.candy.green
 end
 
 -- Keep playfield geometry in sync with the shared layout (also on resize).
@@ -118,13 +114,12 @@ local function randi(n) return love.math.random(n) end
 
 function Falling:spawnPiece()
   local col = randi(self.cols) - 1
-  local color = COLOR_LIST[randi(#COLOR_LIST)]
-  local value = VALUE_LIST[randi(#VALUE_LIST)]
+  local index = Sprites.randomIndex(GAME) or 1
   table.insert(self.pieces, {
     x = col,
     y = -1,
-    color = color,
-    value = value,
+    index = index,
+    value = Sprites.value(GAME, index),
     wobble = love.math.random() * math.pi * 2,
     spawn = 0,
     spin = (love.math.random() - 0.5) * 2,
@@ -148,7 +143,7 @@ function Falling:catchPiece(p)
 
   local cx = self.gx + (p.x + 0.5) * self.cs
   local cy = self.gy + (self.rows - 0.5) * self.cs
-  local col = candyOf(p.color)
+  local col = Theme.accent
 
   Anim.addScorePop(cx, cy - self.cs * 0.4, "+" .. gained, col)
   self.fx:burst(cx, cy - self.cs * 0.15, col, { count = 12, speed = 165 })
@@ -280,20 +275,25 @@ end
 -- ═══════════════════════════════════════════
 -- DRAW
 -- ═══════════════════════════════════════════
-local function candySkin(color)
-  local c = Theme.candy
-  if color == "red" then return c.redBg, c.red, c.redDark end
-  if color == "yellow" then return c.yellowBg, c.yellow, c.yellowDark end
-  if color == "blue" then return c.blueBg, c.blue, c.blueDark end
-  return c.greenBg, c.green, c.greenDark
+local function drawValueBadge(px, py, cs, value, alpha)
+  local r = math.max(9, cs * 0.20)
+  local tw = math.max(Theme.fontSize.tiny, math.floor(cs * 0.26))
+  Theme.softShadow(px - r, py - r, r * 2, r * 2, r, 0.45, { 0.10, 0.06, 0.22 })
+  love.graphics.setColor(0.16, 0.12, 0.28, 0.88 * alpha)
+  love.graphics.circle("fill", px, py, r)
+  love.graphics.setColor(1, 1, 1, 0.18 * alpha)
+  love.graphics.circle("line", px, py, r)
+  love.graphics.setFont(getFont(tw))
+  love.graphics.setColor(1, 0.98, 0.9, alpha)
+  love.graphics.printf(tostring(value), px - r, py - tw * 0.58, r * 2, "center")
 end
 
 function Falling:drawPiece(p, t)
   local cs = self.cs
   local px = self.gx + (p.x + 0.5) * cs
   local py = self.gy + (p.y + 0.5) * cs
-  local col = candyOf(p.color)
-  local topBg, botCol, darkCol = candySkin(p.color)
+  local entry = Sprites.get(GAME, p.index)
+  local col = Theme.accent
 
   -- spawn pop-in (rotation only when motion is allowed)
   local sp = math.min(1, p.spawn / SPAWN_DUR)
@@ -303,13 +303,13 @@ function Falling:drawPiece(p, t)
     rot = math.sin(t * 3 + p.wobble) * 0.08 + p.spin * 0.05
   end
 
-  -- soft shadow (denser the closer the tile is to the floor)
+  -- soft shadow (denser the closer the piece is to the floor)
   local depth = math.max(0, math.min(1, p.y / (self.rows - 1)))
   local shOff = cs * (0.10 + 0.10 * (1 - depth))
   love.graphics.setColor(0, 0, 0, 0.16 + 0.14 * depth)
   love.graphics.ellipse("fill", px, py + cs * 0.46 + shOff, cs * 0.32 * sc, cs * 0.12 * sc)
 
-  -- soft aura for high values (behind the candy body)
+  -- soft aura for high values (behind the sprite)
   if p.value >= 4 then
     local aura = math.min(1, (math.log(p.value) / math.log(2) - 2) / 3)
     love.graphics.setBlendMode("add")
@@ -325,25 +325,23 @@ function Falling:drawPiece(p, t)
   love.graphics.rotate(rot)
   love.graphics.scale(sc, sc)
 
-  local bw, bh = cs * 0.92, cs * 0.92
-  Theme.softShadow(-bw / 2, -bh / 2 + cs * 0.06, bw, bh, Theme.radius.block, 0.5)
-  Theme.rrGradient(-bw / 2, -bh / 2, bw, bh, Theme.radius.block, topBg, botCol, bh * 0.38)
-  Theme.set(darkCol, 0.15)
-  love.graphics.rectangle("fill", -bw / 2 + 3, bh / 2 - 4, bw - 6, 3, 2, 2)
-
-  local img = GridUI.tileImage(p.color, p.value)
-  if img then
+  if entry and entry.img then
+    local img = entry.img
     local iw, ih = img:getDimensions()
-    local scale = math.min((cs + 4) / iw, (cs + 4) / ih)
+    local scale = math.min((cs + 6) / iw, (cs + 6) / ih)
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(img, 0, 0, 0, scale, scale, iw / 2, ih / 2)
   else
-    Theme.rrSolid(-cs * 0.4, -cs * 0.4, cs * 0.8, cs * 0.8, Theme.radius.block, botCol)
+    Theme.rrSolid(-cs * 0.4, -cs * 0.4, cs * 0.8, cs * 0.8, Theme.radius.block, Theme.candy.green)
     Theme.set(Theme.textInverse)
     love.graphics.setFont(getFont(math.max(10, math.floor(cs * 0.34))))
     love.graphics.printf(tostring(p.value), -cs / 2, -cs * 0.18, cs, "center")
   end
   love.graphics.pop()
+
+  if entry then
+    drawValueBadge(px, py + cs * 0.36 * sc, cs, entry.value, 1)
+  end
   love.graphics.setColor(1, 1, 1)
 end
 

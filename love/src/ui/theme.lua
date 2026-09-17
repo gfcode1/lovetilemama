@@ -98,6 +98,19 @@ T.stage = {
   floor    = {0.30, 0.24, 0.46, 0.35},
 }
 
+local function stageVariant(scale)
+  local function sc(c) return { c[1], c[2], c[3], (c[4] or 1) * scale } end
+  local s = T.stage
+  return {
+    top = sc(s.top), mid = sc(s.mid), bot = sc(s.bot),
+    edge = s.edge, glow = s.glow, star = s.star,
+    grid = sc(s.grid), gridLine = sc(s.gridLine),
+    cell = sc(s.cell), cellAlt = sc(s.cellAlt), floor = sc(s.floor),
+  }
+end
+T.stageMain     = stageVariant(0.85)
+T.stageMinigame = stageVariant(0.40)
+
 T.button = {
   primaryBg     = {0.98, 0.48, 0.62},
   primaryHover  = {1, 0.58, 0.70},

@@ -48,6 +48,11 @@ function G.loadImages()
     local ok, img = pcall(love.graphics.newImage, "assets/speciali/crackedwall_nobg_cropped.png")
     if ok then specialImages["wall_cracked"] = img end
   end
+  -- Icona dedicata allo speciale "minigame" quando il gioco estratto e whack.
+  if love.filesystem.getInfo("assets/minigiochi/whack/icon.png") then
+    local ok, img = pcall(love.graphics.newImage, "assets/minigiochi/whack/icon.png")
+    if ok then specialImages["minigame_whack"] = img end
+  end
   -- Riusa le sprite della board in toast/banner (Emoji.draw).
   for _, name in ipairs({ "levelup", "minigame", "points", "points_1", "points_2", "points_3" }) do
     if specialImages[name] then Emoji.register(name, specialImages[name]) end
@@ -75,7 +80,7 @@ function G.draw(engine, layout, selectedId, ghost, pendingMode)
   -- ── Grid container: pannello "vetro" traslucido ──
   local gx, gy = layout.offsetX - 8, layout.offsetY - 8
   local gw, gh = layout.gridPixelW + 16, layout.gridPixelH + 16
-  local st = Theme.stage
+  local st = Theme.stageMain
   Theme.softShadow(gx, gy, gw, gh, Theme.radius.card, 0.7, {0.10, 0.06, 0.22})
 
   -- gradiente traslucido + luce arena + profondità, mascherati agli angoli
@@ -188,6 +193,9 @@ function G.draw(engine, layout, selectedId, ghost, pendingMode)
 
     -- Icon
     local img = specialImages[kind]
+    if kind == "minigame" and sp.game == "whack" then
+      img = specialImages["minigame_whack"] or img
+    end
     if kind == "points" then
       local lvl = sp.pointsLevel or 1
       img = specialImages["points_" .. lvl] or specialImages["points"] or img
